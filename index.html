@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handwritten Digit Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        #canvas {
+            border: 1px solid black;
+            margin-top: 20px;
+            cursor: crosshair;
+        }
+        #prediction {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #clear, #predict {
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Draw a Digit (0-9)</h1>
+    
+    <canvas id="canvas" width=280" height="280"></canvas>
+    <br>
+    <button id="clear">Clear</button>
+    <button id="predict">Predict</button>
+    <br><br>
+    <div id="prediction">Prediction: -</div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const clearButton = document.getElementById('clear');
+        const predictButton = document.getElementById('predict');
+        const predictionDiv = document.getElementById('prediction');
+        
+        let isDrawing = false;
+
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing);
+
+        // Start drawing
+        function startDrawing(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const { offsetX, offsetY } = e.type.includes('touch') ? e.touches[0] : e;
+            ctx.beginPath();
+            ctx.moveTo(offsetX, offsetY);
+        }
+
+        // Draw on canvas
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const { offsetX, offsetY } = e.type.includes('touch') ? e.touches[0] : e;
+            ctx.lineTo(offsetX, offsetY);
+            ctx.lineWidth = 5; // Line width for better visibility
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'black';
+            ctx.stroke();
+        }
+
+        // Stop drawing
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        // Clear the canvas
+        clearButton.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            predictionDiv.textContent = "Prediction: -";
+        });
+
+        // Scale the grayscale image
+        function getGrayscaleImage() {
+            // Create a temporary canvas for resizing
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = 560;
+            tempCanvas.height = 560;
+
+            // Draw the larger canvas image onto the temporary 28x28 canvas
+            tempCtx.drawImage(canvas, 0, 0, 280, 280, 0, 0, 28, 28);
+
+            // Get the image data from the temporary canvas
+            const imageData = tempCtx.getImageData(0, 0, 28, 28);
+            const data = imageData.data;
+            let grayscaleData = [];
+            console.log(data)
+            // data[i+3] concerns alpha channel values, and divide by 255 for normalizing
+            for (let i = 0; i < data.length; i += 4) {
+                grayscaleData.push(data[i+3]/255);
+            }
+
+            return grayscaleData;
+        }
+
+        // Send the image data to the backend for prediction
+        async function predict() {
+            const grayscaleData = getGrayscaleImage();
+            
+            const response = await fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: grayscaleData })
+            });
+
+            const result = await response.json();
+            predictionDiv.textContent = `Prediction: ${result.prediction}`;
+        }
+
+        // Trigger prediction when the user clicks the "Predict" button
+        predictButton.addEventListener('click', predict);
+    </script>
+</body>
+</html>

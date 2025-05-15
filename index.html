@@ -1,40 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Handwritten Digit Recognition</title>
+         <link rel="stylesheet" href="https://use.typekit.net/pad2cqc.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "playfair-display", serif;
+            font-weight: 700;
+            font-style: italic;
+            font-size: larger;
             text-align: center;
-            padding: 20px;
+            background-image: linear-gradient(to bottom right, rgb(77, 164, 222), rgb(199, 75, 223));
+            color: rgb(2, 2, 42);
+            height: 100vh;
+            overflow-y: hidden;
         }
+
         #canvas {
+            align-items: center;
             border: 1px solid black;
             margin-top: 20px;
+            background-color: rgba(133, 183, 216, 0.587);
             cursor: crosshair;
         }
+
         #prediction {
-            font-size: 24px;
-            font-weight: bold;
+            font-family: "playfair-display", serif;
+            font-weight: 700;
+            font-style: italic;
+            font-size: large;
+            font-size: 30px;
+            margin-top:30px;
         }
-        #clear, #predict {
+
+        .c {
+            font-size: medium;
+            background-color: rgb(4, 10, 96);
+            border-radius: 15px;
+            color: white;
+            border: none;
             margin-top: 20px;
             padding: 10px 20px;
             cursor: pointer;
+            margin-right: 12px;
         }
+
+        .p {
+            font-size: medium;
+            background-color: rgb(4, 10, 96);
+            border-radius: 15px;
+            color: white;
+            border: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-left: 12px;
+        }
+
+        .c:hover {
+            background-color: rgb(55, 63, 184);
+        }
+
+        .c:active {
+            background-color: rgb(80, 87, 190);
+        }
+
+        .p:hover {
+            background-color: rgb(55, 63, 184);
+        }
+
+        .p:active {
+            background-color: rgb(80, 87, 190);
+        }
+
+        h1 {
+            margin-top: 50px;
+            margin-bottom: 40px;
+        }
+
     </style>
 </head>
+
 <body>
+
     <h1>Draw a Digit (0-9)</h1>
-    
-    <canvas id="canvas" width=280" height="280"></canvas>
+
+    <canvas id="canvas" width="280" height="280"></canvas>
     <br>
-    <button id="clear">Clear</button>
-    <button id="predict">Predict</button>
+    <button class="c" id="clear">Clear</button>
+    <button class="p" id="predict">Predict</button>
     <br><br>
     <div id="prediction">Prediction: -</div>
+    </div>
 
     <script>
         const canvas = document.getElementById('canvas');
@@ -42,7 +102,6 @@
         const clearButton = document.getElementById('clear');
         const predictButton = document.getElementById('predict');
         const predictionDiv = document.getElementById('prediction');
-        
         let isDrawing = false;
 
         canvas.addEventListener('mousedown', startDrawing);
@@ -70,7 +129,7 @@
             e.preventDefault();
             const { offsetX, offsetY } = e.type.includes('touch') ? e.touches[0] : e;
             ctx.lineTo(offsetX, offsetY);
-            ctx.lineWidth = 5; // Line width for better visibility
+            ctx.lineWidth = 10; // Line width for better visibility
             ctx.lineCap = 'round';
             ctx.strokeStyle = 'black';
             ctx.stroke();
@@ -105,7 +164,7 @@
             console.log(data)
             // data[i+3] concerns alpha channel values, and divide by 255 for normalizing
             for (let i = 0; i < data.length; i += 4) {
-                grayscaleData.push(data[i+3]/255);
+                grayscaleData.push(data[i + 3] / 255);
             }
 
             return grayscaleData;
@@ -114,7 +173,7 @@
         // Send the image data to the backend for prediction
         async function predict() {
             const grayscaleData = getGrayscaleImage();
-            
+
             const response = await fetch('http://127.0.0.1:5000/predict', {
                 method: 'POST',
                 headers: {
@@ -131,4 +190,5 @@
         predictButton.addEventListener('click', predict);
     </script>
 </body>
+
 </html>
